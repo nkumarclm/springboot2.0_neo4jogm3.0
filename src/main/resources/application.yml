@@ -1,0 +1,10 @@
+server:
+  port: 7070
+# neo4j
+neo4j:
+  host: localhost
+  port: 7687
+  username: neo4j
+  password: entitlements
+  protocol: bolt
+  zNodePath:
