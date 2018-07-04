@@ -7,39 +7,61 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.neo4j.ogm.config.ClasspathConfigurationSource;
+import org.neo4j.ogm.config.Configuration;
 import org.neo4j.ogm.session.Session;
 import org.neo4j.ogm.session.SessionFactory;
 import org.neo4j.ogm.session.Utils;
-import org.neo4j.ogm.testutil.MultiDriverTestClass;
-import org.neo4j.ogm.testutil.TestUtils;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Scanner;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 @RunWith(SpringRunner.class)
 @DirtiesContext
-public class Neo4jIntegrationTest extends MultiDriverTestClass{
+public class Neo4jIntegrationTest{
 
     private static SessionFactory sessionFactory;
 
     private Session session;
 
+    static Configuration getNeo4jConfiguration() {
+        org.neo4j.ogm.config.Configuration configuration =
+                new org.neo4j.ogm.config.Configuration.Builder(new ClasspathConfigurationSource("ogm.properties"))
+                .build();
+
+        return configuration;
+    }
+
     @BeforeClass
     public static void beforeClassSetUp() {
-        sessionFactory = new SessionFactory(driver, "com.example.demo.domain");
-        Session initialSession = sessionFactory.openSession();
-        initialSession.query(TestUtils.readCQLFile("data/user_program_test_data.cql").toString(), Utils.map());
+        sessionFactory = new SessionFactory(getNeo4jConfiguration(), "com.example.demo.domain");
     }
 
     @Before
     public void init() throws IOException {
         session = sessionFactory.openSession();
+        loadData();
+    }
+
+    public  void loadData() {
+        StringBuilder cypherStatements = new StringBuilder();
+        try (Scanner scanner = new Scanner(Thread.currentThread().getContextClassLoader().getResourceAsStream("data/user_program_test_data.cql"))) {
+            scanner.useDelimiter(System.getProperty("line.separator"));
+            while (scanner.hasNext()) {
+                cypherStatements.append(scanner.next()).append(' ');
+            }
+        }
+
+        session.query(cypherStatements.toString(), new HashMap<String, Object>());
     }
 
     @After
@@ -61,4 +83,5 @@ public class Neo4jIntegrationTest extends MultiDriverTestClass{
             fail("Satellite Integration Tests not run: Is there a database?");
         }
     }
+
 }
