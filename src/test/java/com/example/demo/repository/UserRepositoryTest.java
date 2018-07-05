@@ -26,7 +26,10 @@ public class UserRepositoryTest extends Neo4jIntegrationTest {
         Pageable pageable = PageRequest.of(0, 1);
         Page<User> userPage = userRepository.findAll(pageable);
         Assert.assertNotNull(userPage);
-        Assert.assertEquals(1, userPage.getTotalPages());
+
+		// due to a bug in the support for PagingAndSortingRepository https://jira.spring.io/browse/DATAGRAPH-1075
+		// we go straight to the elements
+        Assert.assertEquals(1, userPage.getNumberOfElements());
     }
 
 }
